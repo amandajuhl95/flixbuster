@@ -1,0 +1,16 @@
+
+# Connect to Neo4j database
+spring.data.neo4j.uri=bolt://localhost
+spring.data.neo4j.username=neo4j
+spring.data.neo4j.password=neo4j
+
+# Connect to PostgreSQL database
+spring.datasource.url=jdbc:postgresql://localhost:5432/databasename?stringtype=unspecified
+spring.datasource.username=postgres
+spring.datasource.password=password
+
+# Settings for JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL81Dialect
