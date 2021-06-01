@@ -1,4 +1,4 @@
-package dk.chokobanan.flixbuster.model;
+package dk.chokobanan.flixbuster.model.neo4j;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

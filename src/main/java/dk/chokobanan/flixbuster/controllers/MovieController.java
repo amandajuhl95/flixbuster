@@ -1,11 +1,20 @@
 package dk.chokobanan.flixbuster.controllers;
 
+import dk.chokobanan.flixbuster.model.neo4j.Movie;
+import dk.chokobanan.flixbuster.model.neo4j.UserActivity;
+import dk.chokobanan.flixbuster.model.postgresql.User;
+import dk.chokobanan.flixbuster.repository.neo4j.GenreRepository;
+import dk.chokobanan.flixbuster.repository.neo4j.MovieRepository;
+import dk.chokobanan.flixbuster.repository.neo4j.UserActivityRepository;
+import dk.chokobanan.flixbuster.repository.postgresql.AccountRepository;
+import dk.chokobanan.flixbuster.repository.postgresql.UserRepository;
+import dk.chokobanan.flixbuster.repository.redis.SessionManagement;
+import dk.chokobanan.flixbuster.repository.redis.SessionManagementImpl;
 import org.springframework.web.bind.annotation.*;
-import dk.chokobanan.flixbuster.model.*;
-import dk.chokobanan.flixbuster.repository.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/flixbuster/movies")
@@ -16,6 +25,7 @@ public class MovieController {
     private static AccountRepository accountRepository;
     private static UserRepository userRepository;
     private static UserActivityRepository userActivityRepository;
+    private static SessionManagement management;
 
     public MovieController(MovieRepository movieRepository, GenreRepository genreRepository, AccountRepository accountRepository, UserRepository userRepository, UserActivityRepository userActivityRepository) {
         this.movieRepository = movieRepository;
@@ -23,63 +33,103 @@ public class MovieController {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
         this.userActivityRepository = userActivityRepository;
+        this.management = new SessionManagementImpl();
     }
 
-    @GetMapping
-    public Iterable<Movie> findAll() {
-        return movieRepository.findAll();
-    }
+    @GetMapping("/{userId}")
+    public Iterable<Movie> findAll( @PathVariable UUID userId, @RequestBody String token) {
 
-    @GetMapping("/{title}")
-    public Movie getMovieByTitle(@PathVariable String title) {
-        return movieRepository.getMovieByTitle(title);
-    }
+        User user = userRepository.findOneByUuid(userId);
 
-    @GetMapping("/search/{title}")
-    public Iterable<Movie> findMovieByTitleLike(@PathVariable String title) {
-        return movieRepository.findMovieByTitleLike(title);
-    }
-
-    @GetMapping("/genre/{genre}")
-    public Collection<Movie> getMoviesByGenre(@PathVariable String genre) {
-        Collection<Movie> result = genreRepository.getMoviesByGenre(genre);
-        return result;
-    }
-
-    @GetMapping("/newest")
-    public List<Movie> newest(@RequestParam(value = "limit", required = false) Integer limit) {
-        List<Movie> result = movieRepository.newestMovie(limit == null ? 10 : limit);
-        return result;
-    }
-
-    @GetMapping("/director/{name}")
-    public List<Movie> director(@PathVariable String name) {
-        List<Movie> result = movieRepository.findMovieByDirector(name);
-        return result;
-    }
-
-    @GetMapping("/actor/{name}")
-    public List<Movie> actor(@PathVariable String name) {
-        List<Movie> result = movieRepository.findMovieByActor(name);
-        return result;
-    }
-
-    @PostMapping("/watched/{userId}/{movieId}")
-    public Activity watchedMovie(@PathVariable Long userId, @PathVariable Long movieId) {
-
-        User user = userRepository.getOne(userId);
-        boolean userExists = userActivityRepository.existsById(user.getId());
-        boolean movieExists = movieRepository.existsById(movieId);
-
-        if(!userExists) {
-            UserActivity newUserActivity = new UserActivity(user.getId());
-            userActivityRepository.save(newUserActivity);
+        if(user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return movieRepository.findAll();
         }
 
-        userExists = userActivityRepository.existsById(user.getId());
-        if(userExists && movieExists) {
-            Activity activity = userActivityRepository.createActivity(user.getId(), movieId);
-            return activity;
+        return null;
+    }
+
+
+    @GetMapping("/{userId}/search/{title}")
+    public Iterable<Movie> findMovieByTitleLike(@PathVariable String title, @PathVariable UUID userId, @RequestBody String token) {
+
+        User user = userRepository.findOneByUuid(userId);
+
+        if(user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return movieRepository.findMovieByTitleLike(title);
+
+        }
+        return null;
+
+    }
+
+    @GetMapping("/{userId}/genre/{genre}")
+    public Collection<Movie> getMoviesByGenre(@PathVariable String genre, @PathVariable UUID userId, @RequestBody String token) {
+
+        User user = userRepository.findOneByUuid(userId);
+
+        if (user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return genreRepository.getMoviesByGenre(genre);
+        }
+
+        return null;
+
+    }
+
+    @GetMapping("/{userId}/newest")
+    public List<Movie> newest(@RequestParam(value = "limit", required = false) Integer limit, @PathVariable UUID userId, @RequestBody String token) {
+
+        User user = userRepository.findOneByUuid(userId);
+
+        if (user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return movieRepository.newestMovie(limit == null ? 10 : limit);
+
+        }
+
+        return null;
+
+    }
+
+    @GetMapping("/{userId}/director/{name}")
+    public List<Movie> director(@PathVariable String name, @PathVariable UUID userId, @RequestBody String token) {
+
+        User user = userRepository.findOneByUuid(userId);
+
+        if (user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return movieRepository.findMovieByDirector(name);
+        }
+
+        return null;
+    }
+
+    @GetMapping("/{userId}/actor/{name}")
+    public List<Movie> actor(@PathVariable String name, @PathVariable UUID userId, @RequestBody String token) {
+        User user = userRepository.findOneByUuid(userId);
+
+        if (user != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+            return movieRepository.findMovieByActor(name);
+        }
+
+        return null;
+    }
+
+    @PostMapping("/{userId}/watched/{title}")
+    public UserActivity watchedMovie(@PathVariable UUID userId, @PathVariable String title, @RequestParam int rating, @RequestBody String token) {
+
+        User user = userRepository.findOneByUuid(userId);
+        Movie movie = movieRepository.getMovieByTitle(title);
+
+        if(user != null && movie != null && management.hasSession(user.getUuid(), user.getAccount().getUuid(), token)) {
+
+            UserActivity userActivity = userActivityRepository.getUserByUserId(user.getUuid());
+
+            if (userActivity == null) {
+                UserActivity newUserActivity = new UserActivity(userId.toString());
+                userActivityRepository.save(newUserActivity);
+            }
+
+            userActivityRepository.createActivity(user.getUuid(), movie.getTitle(), rating);
+            userActivity = userActivityRepository.getUserByUserId(user.getUuid());
+            return userActivity;
         }
 
         return null;

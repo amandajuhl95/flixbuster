@@ -1,9 +1,14 @@
-package dk.chokobanan.flixbuster.model;
+package dk.chokobanan.flixbuster.model.postgresql;
+
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "account")
@@ -14,6 +19,13 @@ public class Account implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="account_id")
     private long id;
+
+    @GeneratedValue(generator = "UUID")
+    @Type(type="org.hibernate.type.PostgresUUIDType")
+    //@Column(updatable = false, nullable = false, columnDefinition = "uuid DEFAULT uuid_generate_v4()")
+    //@GenericGenerator(name="UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    @Generated(GenerationTime.INSERT)
+    private UUID uuid;
 
     private String firstname;
     private String lastname;
@@ -41,22 +53,11 @@ public class Account implements Serializable {
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;
-        this.passwd = this.hash(passwd);
+        this.passwd = passwd;
         this.birthday = birthday;
         this.phonenumber = phonenumber;
         this.abonnement = abonnement;
         this.payment = payment;
-    }
-
-    // To persist a new account
-    public Account(String firstname, String lastname, String email, String passwd, String birthday, String phonenumber, Abonnement abonnement) {
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.email = email;
-        this.passwd = this.hash(passwd);
-        this.birthday = birthday;
-        this.phonenumber = phonenumber;
-        this.abonnement = abonnement;
     }
 
     public long getId() {
@@ -136,6 +137,18 @@ public class Account implements Serializable {
         user.setAccount(this);
     }
 
+    public User getUser(UUID id) {
+        for (User user: this.users)
+        {
+            if(user.getUuid().equals(id))
+                return user;
+        }
+
+        return null;
+    }
+
+
+
     public Payment getPayment() {
         return payment;
     }
@@ -144,12 +157,21 @@ public class Account implements Serializable {
         this.payment = payment;
     }
 
-    private String hash(String password) {
+    public void hash() {
+        this.passwd += "chokobanan";
         long sum = 0, mul = 1;
-        for (int i = 0; i < password.length(); i++) {
+        for (int i = 0; i < this.passwd.length(); i++) {
             mul = (i % 4 == 0) ? 1 : mul * 256;
-            sum += password.charAt(i) * mul;
+            sum += this.passwd.charAt(i) * mul;
         }
-        return Long.toString(Math.abs(sum) % 300);
+        this.setPasswd(Long.toString(Math.abs(sum) % 3000));
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 }

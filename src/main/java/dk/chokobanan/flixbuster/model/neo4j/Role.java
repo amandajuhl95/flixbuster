@@ -1,6 +1,8 @@
-package dk.chokobanan.flixbuster.model;
+package dk.chokobanan.flixbuster.model.neo4j;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import dk.chokobanan.flixbuster.model.neo4j.Movie;
+import dk.chokobanan.flixbuster.model.neo4j.Person;
 import lombok.Data;
 import org.neo4j.ogm.annotation.*;
 

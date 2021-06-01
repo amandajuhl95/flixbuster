@@ -1,6 +1,7 @@
-package dk.chokobanan.flixbuster.model;
+package dk.chokobanan.flixbuster.model.postgresql;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import dk.chokobanan.flixbuster.model.postgresql.Account;
 
 import javax.persistence.*;
 import javax.persistence.Entity;
