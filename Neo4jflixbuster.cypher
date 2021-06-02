@@ -1,4 +1,15 @@
 //Neo4jflixbuster
+MATCH(n) DETACH DELETE n;
+DROP CONSTRAINT unique_movie IF EXISTS;
+DROP CONSTRAINT unique_person IF EXISTS;
+DROP CONSTRAINT unique_genre IF EXISTS;
+DROP CONSTRAINT unique_user IF EXISTS;
+
+CREATE CONSTRAINT unique_movie ON (m:Movie) ASSERT (m.title, m.released) IS NODE KEY;
+CREATE CONSTRAINT unique_person ON (p:Person) ASSERT (p.name, p.born) IS NODE KEY;
+CREATE CONSTRAINT unique_genre ON (g:Genre) ASSERT (g.name) IS NODE KEY;
+CREATE CONSTRAINT unique_user ON (u:User) ASSERT (u.user_id) IS NODE KEY;
+
 CREATE (Action:Genre {name:'Action'})
 CREATE (SciFi:Genre {name:'Sci-Fi'})
 CREATE (Drama:Genre {name:'Drama'})
@@ -432,7 +443,7 @@ CREATE (SpeedRacer)-[:IN_GENRE]->(Adventure)
 CREATE (SpeedRacer)-[:IN_GENRE]->(Comedy)
 
 CREATE (NinjaAssassin:Movie {title:'Ninja Assassin', released:2009, tagline:'Prepare to enter a secret world of assassins', description:'A young ninja turns his back on the orphanage that raised him, leading to a confrontation with a fellow ninja from the clan.', duration_hours:1, duration_minutes:39, certification:15})
-CREATE (NaomieH:Person {name:'Naomie Harris'})
+CREATE (NaomieH:Person {name:'Naomie Harris', born:1976})
 CREATE
 (Rain)-[:ACTED_IN {roles:['Raizo']}]->(NinjaAssassin),
 (NaomieH)-[:ACTED_IN {roles:['Mika Coretti']}]->(NinjaAssassin),
