@@ -1,5 +1,5 @@
-drop trigger if exists has_account on flixbuster_user;
-drop function if exists has_account;
+drop trigger if exists has_to_many_users on flixbuster_user;
+drop function if exists has_to_many_users;
 DROP TABLE IF EXISTS Flixbuster_User CASCADE;
 DROP TABLE IF EXISTS Payment CASCADE;
 DROP TABLE IF EXISTS Account;
@@ -52,20 +52,25 @@ begin
 end 
 $$ language plpgsql;
 
-call create_account('Kasper', 'Frederiksen', 'kasper_frederiksen@gmail.com', '2980', '1995-10-10', '61271486', 'basis', '2097643167861256', '165', '0123');
-call create_account('Jesper', 'Larsen', 'jesper_larsen@gmail.com', '989', '1979-03-05', '54601814', 'standard', '2097543218765876', '912', '0522');
-call create_account('Jonathan', 'Klausen', 'jonathan_klausen@gmail.com', '1998', '1965-12-24', '61127052', 'premium', '1278479276317942', '764', '1021');
-
-create function has_account() returns trigger as $$
+create function has_to_many_users() returns trigger as $$
+declare 
+	users int;
 begin 
-	if not exists (select 1 from Account where account_id = new.account_id) then 
-	raise exception 'Create account first';
+	users = (select count(*) from flixbuster_user where account_id = new.account_id);
+	if users >= 4 then 
+	raise exception 'Accounts can have no more than 4 users';
 end if;
 	return new;
 end $$ language plpgsql;
 
-create trigger has_account before insert on flixbuster_user
-	for each ROW execute procedure has_account();
+create trigger has_to_many_users before insert on flixbuster_user
+	for each ROW execute procedure has_to_many_users();
+
+
+call create_account('Kasper', 'Frederiksen', 'kasper_frederiksen@gmail.com', '2980', '1995-10-10', '61271486', 'basis', '2097643167861256', '165', '0123');
+call create_account('Jesper', 'Larsen', 'jesper_larsen@gmail.com', '989', '1979-03-05', '54601814', 'standard', '2097543218765876', '912', '0522');
+call create_account('Jonathan', 'Klausen', 'jonathan_klausen@gmail.com', '1998', '1965-12-24', '61127052', 'premium', '1278479276317942', '764', '1021');
+
 
 insert into flixbuster_user (account_id, username) values ((select account_id from Account where firstname = 'Kasper'), 'Betty');
 insert into flixbuster_user (account_id, username, child) values ((select account_id from Account where firstname = 'Jonathan'), 'Storm', TRUE);

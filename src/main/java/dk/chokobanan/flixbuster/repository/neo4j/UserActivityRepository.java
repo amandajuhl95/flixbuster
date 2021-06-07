@@ -13,7 +13,7 @@ public interface UserActivityRepository extends Neo4jRepository<UserActivity, Lo
 
     UserActivity getUserByUserId(UUID userId);
 
-    @Query("MATCH (m:Movie),(u:User) WHERE u.user_id = $user_id AND m.title = $title CREATE (u)-[w:WATCHED {rating:$rating}]->(m) RETURN w")
+    @Query("MATCH (m:Movie),(u:User) WHERE u.user_id = $user_id AND m.title = $title MERGE (u)-[w:WATCHED {rating:$rating}]->(m) RETURN w")
     Activity createActivity(@Param("user_id") UUID userId, @Param("title") String title, @Param("rating") int rating);
 
 }
