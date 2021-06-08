@@ -37,7 +37,8 @@ CREATE TABLE Flixbuster_User (
     REFERENCES Account(account_id),
     UUID uuid default uuid_generate_v4(),
     username varchar(30) not null,
-    child bool default FALSE not null    
+    child bool default FALSE not null, 
+    UNIQUE (username, account_id)
     );
    
 
